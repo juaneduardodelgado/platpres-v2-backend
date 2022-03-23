@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, UploadedFile, UseGuards, UseInterceptors, Request } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { CardModel } from './cards.entity';
@@ -6,7 +6,10 @@ import { CardsService } from './cards.service';
 import { Express } from 'express';
 import *  as path from 'path';
 import * as multer from 'multer';
-import { NotFoundError } from 'rxjs';
+import * as slug from 'slug';
+import * as transcoderHelper from './transcoder.helper';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UserModel } from 'src/users/users.entity';
 
 @Controller('api/cards')
 @ApiTags('cards')
@@ -14,12 +17,15 @@ export class CardsController {
     constructor(private readonly CardsService: CardsService) {}
 
     @Get()
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Cards retrieved successfully.'})
-    public findAll(): Promise<CardModel[]> {
-        return this.CardsService.findAll();
+    public findAll(@Request() req): Promise<CardModel[]> {
+        const user: any = req.user;
+        return this.CardsService.findAll(user.userId);
     }
 
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Card retrieved successfully.'})
     @ApiNotFoundResponse({ description: 'Card not found.' })
     public findOne(@Param('id', ParseIntPipe) id: number): Promise<CardModel> {
@@ -27,13 +33,18 @@ export class CardsController {
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
     @ApiCreatedResponse({ description: 'Card created successfully.' })
     @ApiUnprocessableEntityResponse({ description: 'Card title already exists.' })
-    public create(@Body() Card: CardModel): Promise<CardModel> {
-        return this.CardsService.create(Card);
+    public create(@Request() req, @Body() Card: CardModel): Promise<CardModel> {
+        return this.CardsService.create({
+            ...Card,
+            userId: req.user.userId,
+        });
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Card deleted successfully.'})
     @ApiNotFoundResponse({ description: 'Card not found.' })
     public delete(@Param('id', ParseIntPipe) id: number): void {  
@@ -41,6 +52,7 @@ export class CardsController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Card updated successfully.'})
     @ApiNotFoundResponse({ description: 'Card not found.' })
     @ApiUnprocessableEntityResponse({ description: 'Card title already exists.' })
@@ -57,11 +69,12 @@ export class CardsController {
             filename: function ( req, file, cb ) {
                 const timestamp = new Buffer(new Date().getTime().toString()).toString('base64');
                 const fileo = path.parse(file.originalname);
-                cb( null, fileo.name+ '-' + timestamp + fileo.ext);
+                cb( null, slug(fileo.name + '-' + timestamp) + fileo.ext);
             },
         }),
     }))
     @Post(':id/logo')
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Card files uploaded successfully.'})
     @ApiNotFoundResponse({ description: 'Card not found.' })
     @ApiUnprocessableEntityResponse({ description: 'Card files not uploaded.' })
@@ -70,15 +83,31 @@ export class CardsController {
         @Body() body: CardModel,
         @UploadedFile() file: Express.Multer.File,
     ) {
-        console.log(file);
         const card =  await this.CardsService.findOne(id);
         if (!card) {
             throw new HttpException('Not found', HttpStatus.NOT_FOUND);
         }
 
+        const response: any = await this.uploadRemotely(file.filename, card.id);
+
         card.logoPath = `files/${file.filename}`;
+        card.logoUri = response.uri;
         return this.CardsService.update(card);
     }
+
+    uploadRemotely = function(file, id) {
+        var _file = './uploads/files/' + file;
+        var ext = path.extname(_file);
+        var s3filepath = path.dirname(_file) + '/' + slug(path.basename(_file, ext)) + ext;
+
+        return new Promise((resolve, reject) => {
+            transcoderHelper.uploadToS3(_file, s3filepath, id).then((uri) => {
+                resolve({uri, file});
+            }).catch((reason) => {
+                reject(reason);
+            });
+        });
+    };
 
     @UseInterceptors(FileInterceptor('file', {
         storage: multer.diskStorage({
@@ -86,11 +115,12 @@ export class CardsController {
             filename: function ( req, file, cb ) {
                 const timestamp = new Buffer(new Date().getTime().toString()).toString('base64');
                 const fileo = path.parse(file.originalname);
-                cb( null, fileo.name+ '-' + timestamp + fileo.ext);
+                cb( null, slug(fileo.name + '-' + timestamp) + fileo.ext);
             },
         }),
     }))
     @Post(':id/video')
+    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Card files uploaded successfully.'})
     @ApiNotFoundResponse({ description: 'Card not found.' })
     @ApiUnprocessableEntityResponse({ description: 'Card files not uploaded.' })
@@ -104,7 +134,13 @@ export class CardsController {
             throw new HttpException('Not found', HttpStatus.NOT_FOUND);
         }
 
+        const response: any = await this.uploadRemotely(file.filename, card.id);
+        const fname = path.basename(response.uri);
+        const gifResponse: any = await transcoderHelper.generateGif('public/' + card.id + '/' + fname);
+
         card.videoPath = `files/${file.filename}`;
+        card.videoUri = response.uri;
+        card.videoGifUri = gifResponse.gifUri;
         return this.CardsService.update(card);
     }
 }

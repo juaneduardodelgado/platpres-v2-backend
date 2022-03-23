@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class PresentationModel {
+export class ContactModel {
     @PrimaryGeneratedColumn()
     @ApiPropertyOptional({ type: Number })
     id?: number;
@@ -17,35 +17,17 @@ export class PresentationModel {
       nullable: false,
     })
     @ApiProperty({ type: String })
-    title: string;
+    email: string;
 
     @Column({
-      nullable: true,
+      nullable: false,
     })
     @ApiProperty({ type: String })
-    description: string;
+    name: string;
 
     @Column({
-      nullable: true,
+      nullable: false,
     })
     @ApiProperty({ type: String })
-    videoPath: string;
-
-    @Column({
-      nullable: true,
-    })
-    @ApiProperty({ type: String })
-    thumbPath: string;
-
-    @Column({
-      nullable: true,
-    })
-    @ApiProperty({ type: String })
-    videoUri: string;
-
-    @Column({
-      nullable: true,
-    })
-    @ApiProperty({ type: String })
-    thumbUri: string;
+    phone: string;
   }

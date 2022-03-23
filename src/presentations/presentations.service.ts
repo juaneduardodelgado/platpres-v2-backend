@@ -12,8 +12,9 @@ export class PresentationsService {
         private presentationRepository: Repository<PresentationModel>
     ) {}
 
-    async findAll(): Promise<PresentationModel[]> {
-        return await this.presentationRepository.find();
+    async findAll(userId: number): Promise<PresentationModel[]> {
+        return await this.presentationRepository.createQueryBuilder('presentation')
+            .where('presentation.userId = :userId', {userId}).getMany();
     }
 
     async findOne(id: number): Promise<PresentationModel> {

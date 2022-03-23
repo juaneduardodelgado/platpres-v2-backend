@@ -8,6 +8,12 @@ export class CardModel {
     id?: number;
 
     @Column({
+      nullable: false,
+    })
+    @ApiProperty({ type: Number })
+    userId: number;
+
+    @Column({
       nullable: true,
     })
     @ApiProperty({ type: String })
@@ -53,7 +59,25 @@ export class CardModel {
       nullable: true,
     })
     @ApiProperty({ type: String })
+    logoUri: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
     videoPath: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
+    videoUri: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
+    videoGifUri: string;
 
     @Column({
       nullable: true,

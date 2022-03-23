@@ -12,8 +12,9 @@ export class CardsService {
         private cardRepository: Repository<CardModel>
     ) {}
 
-    async findAll(): Promise<CardModel[]> {
-        return await this.cardRepository.find();
+    async findAll(userId: number): Promise<CardModel[]> {
+        return await this.cardRepository.createQueryBuilder('card')
+            .where('card.userId = :userId', {userId}).getMany();
     }
 
     async findOne(id: number): Promise<CardModel> {

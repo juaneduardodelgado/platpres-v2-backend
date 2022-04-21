@@ -10,17 +10,19 @@ import * as slug from 'slug';
 import * as transcoderHelper from './transcoder.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserModel } from 'src/users/users.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('api/cards')
 @ApiTags('cards')
 export class CardsController {
-    constructor(private readonly CardsService: CardsService) {}
+    constructor(private readonly CardsService: CardsService, private readonly usersService: UsersService) {}
 
     @Get()
     @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Cards retrieved successfully.'})
     public findAll(@Request() req): Promise<CardModel[]> {
         const user: any = req.user;
+        console.log(user);
         return this.CardsService.findAll(user.userId);
     }
 
@@ -36,7 +38,14 @@ export class CardsController {
     @UseGuards(JwtAuthGuard)
     @ApiCreatedResponse({ description: 'Card created successfully.' })
     @ApiUnprocessableEntityResponse({ description: 'Card title already exists.' })
-    public create(@Request() req, @Body() Card: CardModel): Promise<CardModel> {
+    async create(@Request() req, @Body() Card: CardModel): Promise<CardModel> {
+        const user: any = req.user;
+        const _user = await this.usersService.findOne(user.username);
+
+        if (_user && _user.initiated !== true) {
+            _user.initiated = true;
+            await this.usersService.update(_user);
+        }
         return this.CardsService.create({
             ...Card,
             userId: req.user.userId,

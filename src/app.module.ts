@@ -15,6 +15,8 @@ import { UsersModule } from './users/users.module';
 import { ConsoleModule } from 'nestjs-console';
 import { SeedService } from './console/seed.service';
 import { ContactsModule } from './contacts/contacts.module';
+import { ConfigModule } from '@nestjs/config';
+import { GoogleOauthModule } from './auth/google-auth.module';
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { ContactsModule } from './contacts/contacts.module';
     PresentationsModule,
     SharesModule,
     MulterModule,
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'db',
@@ -40,6 +43,7 @@ import { ContactsModule } from './contacts/contacts.module';
       REGION: 'us-east-1',
     }),
     AuthModule,
+    GoogleOauthModule,
     UsersModule,
   ],
   controllers: [AppController],

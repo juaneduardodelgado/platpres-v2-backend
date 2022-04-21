@@ -24,4 +24,17 @@ export class UserModel {
     })
     @ApiProperty({ type: String })
     password: string;
+
+    @Column({
+        nullable: true,
+    })
+    @ApiProperty({ type: String })
+    uuid: string;
+
+    @Column({
+        nullable: true,
+        default: false,
+    })
+    @ApiProperty({ type: Boolean })
+    initiated?: boolean;
   }

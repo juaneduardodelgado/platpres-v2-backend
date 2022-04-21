@@ -13,6 +13,7 @@ import { ContactModel } from 'src/contacts/contacts.entity';
 import { ContactsService } from 'src/contacts/contacts.service';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
+import e from 'express';
 
 @Controller('api/shares')
 @ApiTags('shares')
@@ -35,8 +36,9 @@ export class SharesController {
     @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Shares retrieved successfully.'})
     public findDeals(@Request() req): Promise<ShareContactModel[]> {
+        const status = req.query && req.query.status ? req.query.status : null;
         const user: any = req.user;
-        return this.sharesService.findDeals(user.userId);
+        return this.sharesService.findDeals(user.userId, status);
     }
 
     @Get('/deals/:id')
@@ -137,7 +139,20 @@ export class SharesController {
     @ApiOkResponse({ description: 'Share updated successfully.'})
     @ApiNotFoundResponse({ description: 'Share not found.' })
     @ApiUnprocessableEntityResponse({ description: 'Share title already exists.' })
-    async patch(@Param('id', ParseIntPipe) id: number, @Request() req, @Body() Share: ShareModel): Promise<any> {
+    async patch(@Param('id', ParseIntPipe) id: number, @Request() req, @Body() Share: ShareModel | any): Promise<any> {
+        let contactsIds: any;
+        let contactsEmails: any;
+
+        if (Share.contacts) {
+            contactsIds = Object.assign([], Share.contacts);
+            delete Share.contacts;
+        }
+
+        if (Share.contactsEmails) {
+            contactsEmails = Object.assign([], Share.contactsEmails);
+            delete Share.contactsEmails;
+        }
+
         const share =  await this.sharesService.findOne(id);
         if (!share) {
             throw new HttpException('Not found', HttpStatus.NOT_FOUND);
@@ -160,10 +175,22 @@ export class SharesController {
 
         // TODO: Use subject/observable/emitter to deal with contacts one by one
         // which is necessary for escalability
-        const contacts: [any] = await this.sharesService.parseCsv(share.csvPath);
+        let contacts: any;
+        if (!contactsIds || (contactsIds && contactsIds.length === 0)) {
+            contacts = await this.sharesService.parseCsv(share.csvPath);
+        } else {
+            contacts = contactsIds;
+        }
+
+        if (contactsEmails && contactsEmails.length > 0) {
+            contacts = contactsEmails.map(e => {
+                return {...e, phone: ''};
+            });
+        }
 
         for(let row of contacts) {
-            let contact = await this.contactsService.findByEmail(row.email, req.user.userId);
+            let contact = contactsIds && contactsIds.length ? await this.contactsService.findOne(row) :
+                                   await this.contactsService.findByEmail(row.email, req.user.userId);
 
             if (!contact) {
                 contact = await this.contactsService.create({

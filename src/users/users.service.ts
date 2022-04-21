@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, Repository, UpdateResult } from 'typeorm';
 import { UserModel } from './users.entity';
 
 @Injectable()
@@ -11,6 +11,10 @@ export class UsersService {
   
     async create(entity: UserModel): Promise<UserModel> {
         return await this.userRepository.save(entity);
+    }
+
+    async update(entity: UserModel): Promise<UpdateResult> {
+        return await this.userRepository.update(entity.id, entity)
     }
 
     async findOne(username: string): Promise<UserModel | undefined> {

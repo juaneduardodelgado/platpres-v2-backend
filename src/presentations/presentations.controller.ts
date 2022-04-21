@@ -8,6 +8,7 @@ import { PresentationModel } from './presentations.entity';
 import { PresentationsService } from './presentations.service';
 import * as transcoderHelper from '../cards/transcoder.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { GoogleOauthGuard } from 'src/auth/google-oauth.guard';
 
 @Controller('api/presentations')
 @ApiTags('presentations')

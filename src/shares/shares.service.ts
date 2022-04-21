@@ -101,12 +101,22 @@ export class SharesService {
         return await this.shareContactRepository.save(entity);
     }
 
-    async findDeals(userId: number): Promise<ShareContactModel[]> {
-        return await this.shareContactRepository.createQueryBuilder('share_contact')
+    async findDeals(userId: number, status: string): Promise<ShareContactModel[]> {
+        if (status) {
+            return await this.shareContactRepository.createQueryBuilder('share_contact')
             .leftJoinAndSelect('share_contact.share', 'share')
             .leftJoinAndSelect('share_contact.contact', 'contact')
-            .where('share_contact.userId = :userId and share_contact.state != "rejected"', {userId})
+            .where('share_contact.userId = :userId and share_contact.state == :status',
+                {userId, status})
             .getMany();
+        } else {
+            return await this.shareContactRepository.createQueryBuilder('share_contact')
+            .leftJoinAndSelect('share_contact.share', 'share')
+            .leftJoinAndSelect('share_contact.contact', 'contact')
+            .where('share_contact.userId = :userId and share_contact.state != "rejected"',
+                {userId})
+            .getMany();
+        }
     }
 
     async findDealMessages(userId: number, id: number): Promise<ShareContactMessageModel[]> {

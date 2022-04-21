@@ -37,14 +37,14 @@ export class SharesService {
         private shareContactRepository: Repository<ShareContactModel>,
         @InjectRepository(ShareContactMessageModel)
         private shareContactMessageRepository: Repository<ShareContactMessageModel>,
-        configService: ConfigService,
+        private configService: ConfigService,
     ) {
         this.ses = new aws.SES({
             apiVersion: '2010-12-01',
             region: 'us-east-1',
             credentials: {
-                secretAccessKey: configService.get<string>('AWS_SECRET_ACCESS_KEY'),
-                accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID'),
+                secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+                accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
             }
         });
 
@@ -170,12 +170,13 @@ export class SharesService {
     }
 
     share(share: ShareModel, card: CardModel, presentation: PresentationModel, contact: ContactModel, deal: ShareContactModel): void {
+        const appUrl = this.configService.get<string>('REDIRECT_FRONT_BASE_URL');
         let htmlData = `${email_tmpl}`.replace(/%%videoUrl%%/g, card.videoGifUri)
                                       .replace(/%%logoUrl%%/g,  card.logoUri)
                                       .replace(/%%name%%/g, `${card.name} ${card.lnames}`)
                                       .replace(/%%position%%/g, card.position)
                                       .replace(/%%thumbUrl%%/g, presentation.thumbUri)
-                                      .replace(/%%seeMoreUrl%%/g, `http://localhost:4200/app/presentation/${deal.id}`);
+                                      .replace(/%%seeMoreUrl%%/g, `${appUrl}/presentation/${deal.id}`);
 
         const options: SesEmailOptions = {
             from: 'info@platpres.com',

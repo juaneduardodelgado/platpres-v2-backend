@@ -1,11 +1,12 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleOauthGuard } from './google-oauth.guard';
 import { JwtAuthService } from './jwt-auth.service';
 
 @Controller('auth/google')
 export class GoogleOauthController {
-  constructor(private jwtAuthService: JwtAuthService) {}
+  constructor(private jwtAuthService: JwtAuthService, private configService: ConfigService) {}
 
   @Get()
   @UseGuards(GoogleOauthGuard)
@@ -18,7 +19,7 @@ export class GoogleOauthController {
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const { accessToken } = this.jwtAuthService.login(req.user);
     res.cookie('jwt', accessToken);
-    res.redirect('http://localhost:4200/app');
+    res.redirect(this.configService.get<string>('REDIRECT_FRONT_BASE_URL'));
     return req.user;
   }
 }

@@ -13,21 +13,10 @@ import { ContactModel } from 'src/contacts/contacts.entity';
 import { SesEmailOptions } from '@nextnm/nestjs-ses';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
-
-const AWS_ACCESS_KEY_ID = 'AKIAVYXL7USELAIAZZOL';
-const AWS_SECRET_ACCESS_KEY = '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';
-
-const ses = new aws.SES({
-    apiVersion: '2010-12-01',
-    region: 'us-east-1',
-    credentials: {
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-        accessKeyId: AWS_ACCESS_KEY_ID
-    }
-});
+import { ConfigService } from '@nestjs/config';
 
 let email_tmpl = '';
-
+    
 fs.readFile('./src/template.html', 'utf8', (err, data) => {
     if (err) {
         throw err;
@@ -35,14 +24,11 @@ fs.readFile('./src/template.html', 'utf8', (err, data) => {
     email_tmpl = data;
 });
 
-// create Nodemailer SES transporter
-let transporter = nodemailer.createTransport({
-    SES: { ses, aws }
-});
-
 @Injectable()
 export class SharesService {
     private readonly logger = new Logger(SharesService.name);
+    ses: any;
+    transporter: any;
 
     constructor(
         @InjectRepository(ShareModel)
@@ -50,8 +36,22 @@ export class SharesService {
         @InjectRepository(ShareContactModel)
         private shareContactRepository: Repository<ShareContactModel>,
         @InjectRepository(ShareContactMessageModel)
-        private shareContactMessageRepository: Repository<ShareContactMessageModel>
-    ) {}
+        private shareContactMessageRepository: Repository<ShareContactMessageModel>,
+        configService: ConfigService,
+    ) {
+        this.ses = new aws.SES({
+            apiVersion: '2010-12-01',
+            region: 'us-east-1',
+            credentials: {
+                secretAccessKey: configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+                accessKeyId: configService.get<string>('AWS_ACCESS_KEY_ID'),
+            }
+        });
+
+        this.transporter = nodemailer.createTransport({
+            SES: { ses: this.ses, aws }
+        });
+    }
 
     async getMetrics(userId: number): Promise<any> {
         const sentCount = await this.shareContactRepository.count({
@@ -185,7 +185,7 @@ export class SharesService {
             replyTo: 'noreply@platpres.com',
         };
 
-        transporter.sendMail(options,
+        this.transporter.sendMail(options,
             (err, info) => {
                 console.log(err || info);
             }

@@ -9,9 +9,11 @@ import { PresentationsModule } from 'src/presentations/presentations.module';
 import { ContactsModule } from 'src/contacts/contacts.module';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     CardsModule,
     PresentationsModule,
     ContactsModule,

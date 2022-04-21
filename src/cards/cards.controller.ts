@@ -11,11 +11,16 @@ import * as transcoderHelper from './transcoder.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UserModel } from 'src/users/users.entity';
 import { UsersService } from 'src/users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('api/cards')
 @ApiTags('cards')
 export class CardsController {
-    constructor(private readonly CardsService: CardsService, private readonly usersService: UsersService) {}
+    constructor(private readonly CardsService: CardsService, private readonly usersService: UsersService,
+        configService: ConfigService) {
+        transcoderHelper.setCredentials(configService.get<string>('AWS_ACCESS_KEY_ID'),
+                                        configService.get<string>('AWS_SECRET_ACCESS_KEY'));
+    }
 
     @Get()
     @UseGuards(JwtAuthGuard)

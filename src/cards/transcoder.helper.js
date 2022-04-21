@@ -4,15 +4,24 @@ var S3FS = require('s3fs');
 const fs = require('fs');
 const path = require('path');
 
-var awsOptions = {
-  region: 'us-east-1',
-  accessKeyId: 'AKIAIIRCKZYDCLZLVLLA',
-  secretAccessKey: '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',
-};
-
 const bucket = 'platpres-digital2';
-var elastictranscoder = new AWS.ElasticTranscoder(awsOptions);
-var s3 = new AWS.S3(awsOptions);
+var elastictranscoder;
+var s3;
+var accessKeyId;
+var secretAccessKey;
+
+var setCredentials = function(_accessKeyId, _secretAccessKey) {
+  accessKeyId = _accessKeyId;
+  secretAccessKey = _secretAccessKey;
+
+  let awsOptions = {
+    region: 'us-east-1',
+    accessKeyId: accessKeyId,
+    secretAccessKey: secretAccessKey,
+  };
+  elastictranscoder = new AWS.ElasticTranscoder(awsOptions);
+  s3 = new AWS.S3(awsOptions);
+}
 
 var getTranscodeMovMp4Params = function(s3Path) {
   var dir = path.dirname(s3Path) + '/';
@@ -200,6 +209,7 @@ var uploadToS3 = function(filePath, s3FilePath, folder) {
   });
 };
 
+exports.setCredentials = setCredentials;
 exports.uploadToS3 = uploadToS3;
 exports.generateGif = generateGif;
 exports.generateMovMp4 = generateMovMp4;

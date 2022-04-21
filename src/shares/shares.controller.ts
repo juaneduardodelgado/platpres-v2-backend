@@ -140,8 +140,8 @@ export class SharesController {
     @ApiNotFoundResponse({ description: 'Share not found.' })
     @ApiUnprocessableEntityResponse({ description: 'Share title already exists.' })
     async patch(@Param('id', ParseIntPipe) id: number, @Request() req, @Body() Share: ShareModel | any): Promise<any> {
-        let contactsIds: any;
-        let contactsEmails: any;
+        let contactsIds: any = [];
+        let contactsEmails: any = [];
 
         if (Share.contacts) {
             contactsIds = Object.assign([], Share.contacts);
@@ -176,7 +176,7 @@ export class SharesController {
         // TODO: Use subject/observable/emitter to deal with contacts one by one
         // which is necessary for escalability
         let contacts: any;
-        if (!contactsIds || (contactsIds && contactsIds.length === 0)) {
+        if ((contactsIds && contactsIds.length === 0) && (contactsEmails && contactsEmails.length === 0)) {
             contacts = await this.sharesService.parseCsv(share.csvPath);
         } else {
             contacts = contactsIds;

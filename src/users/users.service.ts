@@ -26,4 +26,14 @@ export class UsersService {
             return undefined;
         }
     }
+
+    async findOnebyUuid(uuid: string): Promise<UserModel | undefined> {
+        const results = await this.userRepository.createQueryBuilder('user')
+            .where('user.uuid like :uuid', {uuid: `%${uuid}`}).getMany();
+        if (results && results.length > 0) {
+            return results[0];
+        } else {
+            return undefined;
+        }
+    }
 }

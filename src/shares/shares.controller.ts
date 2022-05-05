@@ -14,6 +14,7 @@ import { ContactsService } from 'src/contacts/contacts.service';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
 import e from 'express';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('api/shares')
 @ApiTags('shares')
@@ -22,6 +23,7 @@ export class SharesController {
         private cardsService: CardsService,
         private presentationsService: PresentationsService,
         private contactsService: ContactsService,
+        private usersService: UsersService,
         private sesService: SesService) {}
 
     @Get('/metrics')
@@ -189,14 +191,42 @@ export class SharesController {
         }
 
         for(let row of contacts) {
-            let contact = contactsIds && contactsIds.length ? await this.contactsService.findOne(row) :
-                                   await this.contactsService.findByEmail(row.email, req.user.userId);
+            let contact = null;
+            let contactFoundByUuid = false;
+            
+            if (contactsIds && contactsIds.length ) {
+                contact = await this.contactsService.findOne(row);
+
+                if (!contact) {
+                    contact = await this.contactsService.findByShortId(row, req.user.userId);
+                    contactFoundByUuid = contact !== null; 
+                }
+            } else {
+                contact = await this.contactsService.findByEmail(row.email, req.user.userId);
+            }
 
             if (!contact) {
-                contact = await this.contactsService.create({
-                    ...row,
-                    userId: req.user.userId,
-                });
+                if (row && row.email) {
+                    contact = await this.contactsService.create({
+                        ...row,
+                        userId: req.user.userId,
+                    });
+                } else {
+                    console.log('looking by uuid', row);
+                    const user = await this.usersService.findOnebyUuid(row);
+                    if (user) {
+                        contact = await this.contactsService.create({
+                            email: user.username,
+                            name: user.name,
+                            phone: '',
+                            uuid: user.uuid,
+                            userId: req.user.userId,
+                        });
+
+                        console.log('contact created:');
+                        console.log(contact);
+                    }
+                }
             } else {
                 await this.contactsService.update({
                     ...contact,

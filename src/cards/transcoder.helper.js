@@ -9,12 +9,13 @@ var elastictranscoder;
 var s3;
 var accessKeyId;
 var secretAccessKey;
+var awsOptions;
 
 var setCredentials = function(_accessKeyId, _secretAccessKey) {
   accessKeyId = _accessKeyId;
   secretAccessKey = _secretAccessKey;
 
-  let awsOptions = {
+  awsOptions = {
     region: 'us-east-1',
     accessKeyId: accessKeyId,
     secretAccessKey: secretAccessKey,

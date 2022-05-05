@@ -10,6 +10,7 @@ import { ContactsModule } from 'src/contacts/contacts.module';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
 import { ConfigModule } from '@nestjs/config';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
     CardsModule,
     PresentationsModule,
     ContactsModule,
+    UsersModule,
     TypeOrmModule.forFeature([ShareModel, ShareContactModel, ShareContactMessageModel]),
     SesModule.forRoot({
       SECRET: 'AKIAVYXL7USELAIAZZOL',

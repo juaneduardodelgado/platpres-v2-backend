@@ -16,7 +16,7 @@ export class ContactModel {
     @Column({
       nullable: false,
     })
-    @ApiProperty({ type: String })
+    @ApiProperty({ type: String, nullable: true })
     email: string;
 
     @Column({
@@ -30,4 +30,10 @@ export class ContactModel {
     })
     @ApiProperty({ type: String })
     phone: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
+    uuid: string;
   }

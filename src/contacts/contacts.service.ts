@@ -18,7 +18,7 @@ export class ContactsService {
     }
 
     async findOne(id: number): Promise<ContactModel> {
-        return await this.contactRepository.findOne(id);
+        return  await this.contactRepository.findOne(id);
     }
 
     async create(entity: ContactModel): Promise<ContactModel> {
@@ -36,6 +36,16 @@ export class ContactsService {
     async findByEmail(email: string, userId: number): Promise<ContactModel | undefined> {
         const results = await this.contactRepository.createQueryBuilder('user')
             .where('user.email = :email and user.userId = :userId', {email, userId}).getMany();
+        if (results && results.length > 0) {
+            return results[0];
+        } else {
+            return undefined;
+        }
+    }
+
+    async findByShortId(uuid: string, userId: number): Promise<ContactModel | undefined> {
+        const results = await this.contactRepository.createQueryBuilder('user')
+            .where('user.uuid = :uuid and user.userId = :userId', {uuid, userId}).getMany();
         if (results && results.length > 0) {
             return results[0];
         } else {

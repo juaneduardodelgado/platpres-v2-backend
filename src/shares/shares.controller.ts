@@ -43,6 +43,16 @@ export class SharesController {
         return this.sharesService.findDeals(user.userId, status);
     }
 
+    @Get('/received_deals')
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ description: 'Shares retrieved successfully.'})
+    public findReceivedDeals(@Request() req): Promise<ShareContactModel[]> {
+        const status = req.query && req.query.status ? req.query.status : null;
+        const user: any = req.user;
+        console.log(user);
+        return this.sharesService.findReceivedDeals(user.username);
+    }
+
     @Get('/deals/:id')
     @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Shares retrieved successfully.'})
@@ -243,6 +253,7 @@ export class SharesController {
                 userId: req.user.userId,
                 share: null,
                 contact: null,
+                user: null,
             });
 
             await this.sharesService.share(share, card, presentation, contact, deal);

@@ -119,6 +119,23 @@ export class SharesService {
         }
     }
 
+    async findReceivedDeals(email: string): Promise<ShareContactModel[]> {
+        console.log(this.shareContactRepository.createQueryBuilder('share_contact')
+        .leftJoinAndSelect('share_contact.share', 'share')
+        .leftJoinAndSelect('share_contact.contact', 'contact')
+        .leftJoinAndSelect('share.card', 'card')
+        .where('contact.email = :email',
+            {email})
+            .getQuery())
+        return await this.shareContactRepository.createQueryBuilder('share_contact')
+        .leftJoinAndSelect('share_contact.share', 'share')
+        .leftJoinAndSelect('share_contact.contact', 'contact')
+        .leftJoinAndSelect('share.card', 'card')
+        .where('contact.email = :email',
+            {email})
+            .getMany();
+    }
+
     async findDealMessages(userId: number, id: number): Promise<ShareContactMessageModel[]> {
         return await this.shareContactMessageRepository.createQueryBuilder('record')
             .leftJoinAndSelect('record.user', 'user')
@@ -132,8 +149,10 @@ export class SharesService {
             .leftJoinAndSelect('share_contact.contact', 'contact')
             .leftJoinAndSelect('share.card', 'card')
             .leftJoinAndSelect('share.presentation', 'presentation')
-            .where('share_contact.id = :id and share_contact.userId = :userId and share_contact.state != "rejected"', {id, userId})
+            .where('share_contact.id = :id and share_contact.state != "rejected"', {id, userId})
             .getOne();
+
+        // and share_contact.userId = :userId
     }
 
     async findAnonymousDeal(id: number): Promise<ShareContactModel> {

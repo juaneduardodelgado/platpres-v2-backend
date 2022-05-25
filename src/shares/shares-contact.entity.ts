@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ContactModel } from "src/contacts/contacts.entity";
+import { UserModel } from "src/users/users.entity";
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { ShareModel } from "./shares.entity";
 
@@ -39,4 +40,7 @@ export class ShareContactModel {
 
     @ManyToOne(type => ContactModel)
     contact: ContactModel;
+
+    @ManyToOne(type => UserModel)
+    user: UserModel;
   }

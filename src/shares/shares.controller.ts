@@ -278,7 +278,7 @@ export class SharesController {
             });
 
             const cards =  await this.cardsService.findAll(req.user.userId);
-            const masterCard = cards && cards.length ? card[0] : null;
+            const masterCard = cards && cards.length ? cards[0] : null;
 
             if (masterCard) {
                 card.name = masterCard.name;

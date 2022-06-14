@@ -39,8 +39,9 @@ export class SharesController {
     @ApiOkResponse({ description: 'Shares retrieved successfully.'})
     public findDeals(@Request() req): Promise<ShareContactModel[]> {
         const status = req.query && req.query.status ? req.query.status : null;
+        const shareId = req.query && req.query.shareId ? req.query.shareId : -1;
         const user: any = req.user;
-        return this.sharesService.findDeals(user.userId, status);
+        return this.sharesService.findDeals(user.userId, status, shareId);
     }
 
     @Get('/received_deals')
@@ -54,11 +55,10 @@ export class SharesController {
     }
 
     @Get('/deals/:id')
-    @UseGuards(JwtAuthGuard)
     @ApiOkResponse({ description: 'Shares retrieved successfully.'})
     public findDeal(@Request() req, @Param('id', ParseIntPipe) id: number): Promise<ShareContactModel> {
         const user: any = req.user;
-        return this.sharesService.findDeal(user.userId, id);
+        return this.sharesService.findDeal(user ? user.userId : null, id);
     }
 
     @Get('/deals/:id/messages')
@@ -116,6 +116,25 @@ export class SharesController {
 
         return {
             message: 'accepted',
+        }
+    }
+
+    @Post('/:id/reject')
+    @ApiCreatedResponse({ description: 'Share created successfully.' })
+    @ApiUnprocessableEntityResponse({ description: 'Share title already exists.' })
+    async reject(@Param('id', ParseIntPipe) id: number, @Body() data: any): Promise<any> {
+        const deal = await this.sharesService.findAnonymousDeal(id);
+        if (!deal) {
+            throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+        }
+
+        await this.sharesService.createContact({
+            ...deal,
+            state: 'rejected',
+        });
+
+        return {
+            message: 'rejected',
         }
     }
 
@@ -209,7 +228,7 @@ export class SharesController {
 
                 if (!contact) {
                     contact = await this.contactsService.findByShortId(row, req.user.userId);
-                    contactFoundByUuid = contact !== null; 
+                    contactFoundByUuid = contact !== null;
                 }
             } else {
                 contact = await this.contactsService.findByEmail(row.email, req.user.userId);
@@ -219,6 +238,7 @@ export class SharesController {
                 if (row && row.email) {
                     contact = await this.contactsService.create({
                         ...row,
+                        id: null,
                         userId: req.user.userId,
                     });
                 } else {
@@ -238,6 +258,7 @@ export class SharesController {
                     }
                 }
             } else {
+                delete row.id;
                 await this.contactsService.update({
                     ...contact,
                     ...row,
@@ -256,6 +277,16 @@ export class SharesController {
                 user: null,
             });
 
+            const cards =  await this.cardsService.findAll(req.user.userId);
+            const masterCard = cards && cards.length ? card[0] : null;
+
+            if (masterCard) {
+                card.name = masterCard.name;
+                card.lnames = masterCard.lnames;
+                card.email = masterCard.email;
+                card.logoPath = masterCard.logoPath;
+                card.logoUri = masterCard.logoUri;
+            }
             await this.sharesService.share(share, card, presentation, contact, deal);
         }
         

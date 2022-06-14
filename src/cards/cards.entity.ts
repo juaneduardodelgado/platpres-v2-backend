@@ -96,4 +96,11 @@ export class CardModel {
     })
     @ApiProperty({ type: String })
     barColor: string;
+
+    @Column({
+      nullable: true,
+      default: 'created',
+    })
+    @ApiProperty({ type: String })
+    state: string;
   }

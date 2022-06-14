@@ -14,7 +14,7 @@ export class PresentationsService {
 
     async findAll(userId: number): Promise<PresentationModel[]> {
         return await this.presentationRepository.createQueryBuilder('presentation')
-            .where('presentation.userId = :userId', {userId}).getMany();
+            .where('presentation.userId = :userId and presentation.state <> "deleted"', {userId}).getMany();
     }
 
     async findOne(id: number): Promise<PresentationModel> {

@@ -48,4 +48,11 @@ export class PresentationModel {
     })
     @ApiProperty({ type: String })
     thumbUri: string;
+
+    @Column({
+      nullable: true,
+      default: 'created',
+    })
+    @ApiProperty({ type: String })
+    state: string;
   }

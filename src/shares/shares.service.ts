@@ -101,32 +101,27 @@ export class SharesService {
         return await this.shareContactRepository.save(entity);
     }
 
-    async findDeals(userId: number, status: string): Promise<ShareContactModel[]> {
+    async findDeals(userId: number, status: string, shareId: number): Promise<ShareContactModel[]> {
         if (status) {
             return await this.shareContactRepository.createQueryBuilder('share_contact')
             .leftJoinAndSelect('share_contact.share', 'share')
             .leftJoinAndSelect('share_contact.contact', 'contact')
-            .where('share_contact.userId = :userId and share_contact.state == :status',
-                {userId, status})
+            .where('share_contact.userId = :userId and share_contact.state == :status' +
+                (shareId > -1 ? ' and share_contact.shareId == :shareId' : ''),
+                {userId, status, shareId})
             .getMany();
         } else {
             return await this.shareContactRepository.createQueryBuilder('share_contact')
             .leftJoinAndSelect('share_contact.share', 'share')
             .leftJoinAndSelect('share_contact.contact', 'contact')
-            .where('share_contact.userId = :userId and share_contact.state != "rejected"',
-                {userId})
+            .where('share_contact.userId = :userId and share_contact.state != "rejected"' +
+                (shareId > -1 ? ' and share_contact.shareId == :shareId' : ''),
+                {userId, shareId})
             .getMany();
         }
     }
 
     async findReceivedDeals(email: string): Promise<ShareContactModel[]> {
-        console.log(this.shareContactRepository.createQueryBuilder('share_contact')
-        .leftJoinAndSelect('share_contact.share', 'share')
-        .leftJoinAndSelect('share_contact.contact', 'contact')
-        .leftJoinAndSelect('share.card', 'card')
-        .where('contact.email = :email',
-            {email})
-            .getQuery())
         return await this.shareContactRepository.createQueryBuilder('share_contact')
         .leftJoinAndSelect('share_contact.share', 'share')
         .leftJoinAndSelect('share_contact.contact', 'contact')
@@ -149,7 +144,7 @@ export class SharesService {
             .leftJoinAndSelect('share_contact.contact', 'contact')
             .leftJoinAndSelect('share.card', 'card')
             .leftJoinAndSelect('share.presentation', 'presentation')
-            .where('share_contact.id = :id and share_contact.state != "rejected"', {id, userId})
+            .where('share_contact.id = :id', {id, userId})
             .getOne();
 
         // and share_contact.userId = :userId
@@ -161,7 +156,7 @@ export class SharesService {
             .leftJoinAndSelect('share_contact.contact', 'contact')
             .leftJoinAndSelect('share.card', 'card')
             .leftJoinAndSelect('share.presentation', 'presentation')
-            .where('share_contact.id = :id and share_contact.state != "rejected"', {id})
+            .where('share_contact.id = :id', {id})
             .getOne();
     }
 

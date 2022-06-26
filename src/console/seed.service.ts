@@ -25,7 +25,8 @@ export class SeedService {
       
       const hash = await bcrypt.hash(pwd, 10);
       await this.usersService.create({
-        name: 'Juan Carlos Mateus',
+        name: 'Juan Carlos',
+        lastname: 'Mateus',
         username: 'info@platpres.com',
         password: hash,
         uuid: _uuid.toString(),

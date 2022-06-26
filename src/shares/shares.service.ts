@@ -183,14 +183,14 @@ export class SharesService {
         
     }
 
-    share(share: ShareModel, card: CardModel, presentation: PresentationModel, contact: ContactModel, deal: ShareContactModel): void {
+    share(share: ShareModel, card: CardModel, presentation: PresentationModel | any, contact: ContactModel, deal: ShareContactModel): void {
         const appUrl = this.configService.get<string>('REDIRECT_FRONT_BASE_URL');
         let htmlData = `${email_tmpl}`.replace(/%%videoUrl%%/g, card.videoGifUri)
                                       .replace(/%%logoUrl%%/g,  card.logoUri)
                                       .replace(/%%name%%/g, `${card.name} ${card.lnames}`)
                                       .replace(/%%position%%/g, card.position)
                                       .replace(/%%thumbUrl%%/g, presentation.thumbUri)
-                                      .replace(/%%seeMoreUrl%%/g, `${appUrl}/presentation/${deal.id}`);
+                                      .replace(/%%seeMoreUrl%%/g, `${appUrl}/app/presentation/${deal.id}`);
 
         const options: SesEmailOptions = {
             from: 'info@platpres.com',

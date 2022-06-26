@@ -103,4 +103,22 @@ export class CardModel {
     })
     @ApiProperty({ type: String })
     state: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: Number })
+    logoScale: number;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: Number })
+    logoXPosition: number;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: Number })
+    logoYPosition: number;
   }

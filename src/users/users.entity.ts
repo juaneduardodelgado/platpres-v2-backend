@@ -14,6 +14,12 @@ export class UserModel {
     name: string;
 
     @Column({
+      nullable: false,
+    })
+    @ApiProperty({ type: String, default: '' })
+    lastname: string;
+
+    @Column({
         nullable: false,
     })
     @ApiProperty({ type: String })
@@ -37,4 +43,24 @@ export class UserModel {
     })
     @ApiProperty({ type: Boolean })
     initiated?: boolean;
+
+    @Column({
+        nullable: true,
+        default: false,
+    })
+    @ApiProperty({ type: Boolean })
+    activated?: boolean;
+
+    @Column({
+        nullable: true,
+        default: '',
+    })
+    @ApiProperty({ type: String })
+    activationCode?: string;
+
+    @Column({
+        nullable: true,
+    })
+    @ApiProperty({ type: Date })
+    activationCodeExpiration?: Date;
   }

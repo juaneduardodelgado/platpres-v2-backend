@@ -199,8 +199,9 @@ export class SharesController {
             throw new HttpException('Not found', HttpStatus.NOT_FOUND);
         }
 
-        const presentation =  await this.presentationsService.findOne(share.presentationId);
-        if (!presentation) {
+        const presentation =  share.presentationId ? await this.presentationsService.findOne(share.presentationId) : {};
+        console.log(share.presentationId);
+        if (share.presentationId && !presentation) {
             throw new HttpException('Not found', HttpStatus.NOT_FOUND);
         }
 

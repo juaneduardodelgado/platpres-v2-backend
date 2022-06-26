@@ -22,7 +22,7 @@ export class ShareModel {
     cardId: number;
 
     @Column({
-      nullable: false,
+      nullable: true,
     })
     @ApiProperty({ type: Number })
     presentationId: number;

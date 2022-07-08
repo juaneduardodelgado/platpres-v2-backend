@@ -14,6 +14,8 @@ import { SesEmailOptions } from '@nextnm/nestjs-ses';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
 import { ConfigService } from '@nestjs/config';
+import { userInfo } from 'os';
+import { UserModel } from 'src/users/users.entity';
 
 let email_tmpl = '';
     
@@ -183,19 +185,29 @@ export class SharesService {
         
     }
 
-    share(share: ShareModel, card: CardModel, presentation: PresentationModel | any, contact: ContactModel, deal: ShareContactModel): void {
+    share(user: UserModel, share: ShareModel, card: CardModel, presentation: PresentationModel | any, contact: ContactModel, deal: ShareContactModel): void {
         const appUrl = this.configService.get<string>('REDIRECT_FRONT_BASE_URL');
+        const subject = presentation && presentation.id ? `::Platpres:: ${user.name + user.lastname} te ha compartido una presentación` :
+            `::Platpres:: ${user.name + user.lastname} te ha compartido una tarjeta`;
+        const resourceName = presentation && presentation.id ? 'presentación' : 'tarjeta';
+
+        const presentationHtml = presentation && presentation.id ? `<h2 style="color: #3A5081; font-size: 14px; margin-bottom: 24px">Video presentación enviada</h2>
+        <div style="width: 80%;margin-bottom: 36px;">
+            <img src="${presentation.thumbUri}" style="width: 100%; border-radius: 16px">
+        </div>;` : '';
         let htmlData = `${email_tmpl}`.replace(/%%videoUrl%%/g, card.videoGifUri)
                                       .replace(/%%logoUrl%%/g,  card.logoUri)
+                                      .replace(/%%logoScale%%/g,  card.logoScale.toString())
                                       .replace(/%%name%%/g, `${card.name} ${card.lnames}`)
                                       .replace(/%%position%%/g, card.position)
-                                      .replace(/%%thumbUrl%%/g, presentation.thumbUri)
+                                      .replace(/%%presentationHtml%%/g, presentationHtml)
+                                      .replace(/%%resourceName%%/g, resourceName)
                                       .replace(/%%seeMoreUrl%%/g, `${appUrl}/app/presentation/${deal.id}`);
 
         const options: SesEmailOptions = {
             from: 'info@platpres.com',
             to: contact.email,
-            subject: '::Platpres:: Te han compartido una presentación',
+            subject: subject,
             html: htmlData,
             replyTo: 'noreply@platpres.com',
         };

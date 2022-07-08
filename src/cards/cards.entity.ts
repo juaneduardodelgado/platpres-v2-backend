@@ -17,6 +17,12 @@ export class CardModel {
       nullable: true,
     })
     @ApiProperty({ type: String })
+    cardName: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
     name: string;
 
     @Column({

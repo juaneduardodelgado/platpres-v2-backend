@@ -14,7 +14,7 @@ export class CardsService {
 
     async findAll(userId: number): Promise<CardModel[]> {
         return await this.cardRepository.createQueryBuilder('card')
-            .where('card.userId = :userId', {userId}).getMany();
+            .where('card.userId = :userId and card.state <> "deleted"', {userId}).getMany();
     }
 
     async findOne(id: number): Promise<CardModel> {

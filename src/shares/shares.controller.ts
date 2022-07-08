@@ -288,7 +288,7 @@ export class SharesController {
                 card.logoPath = masterCard.logoPath;
                 card.logoUri = masterCard.logoUri;
             }
-            await this.sharesService.share(share, card, presentation, contact, deal);
+            await this.sharesService.share(req.user, share, card, presentation, contact, deal);
         }
         
         // this.sharesService.share(share, card, presentation, contact);

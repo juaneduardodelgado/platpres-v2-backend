@@ -12,12 +12,10 @@
             padding: 28px 41px;
             display: block; margin: 0 auto; padding-top: 36px; flex-direction: column">
 
-                <h1 style="color: #3A5081">Te han compartido una presentación:</h1>
+                <h1 style="color: #3A5081">Te han compartido una %%resourceName%%:</h1>
 
-                <h2 style="color: #3A5081; font-size: 14px; margin-bottom: 24px">Video presentación enviada</h2>
-                <div style="width: 80%;margin-bottom: 36px;">
-                    <img src="%%thumbUrl%%" style="width: 100%; border-radius: 16px">
-                </div>
+                %%presentationHtml%%
+
                 <h2 style="color: #3A5081; font-size: 14px; margin-bottom: 24px">Tarjeta enviada</h2>
         
                 <table style="padding: 10px; border: 1px solid #ccc; width: 480px; height: 300px; border-radius: 16px;
@@ -26,7 +24,7 @@
                     <tr style="height: 100px">
                         <td>
                             <img src="%%logoUrl%%"
-                                style="width: 90px;">
+                                style="width: 90px; transform: scale(%%logoScale%%);">
                         </td>
                     </tr>
                     <tr style="height: 40px"><td>

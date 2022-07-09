@@ -187,21 +187,39 @@ export class SharesService {
 
     share(user: UserModel, share: ShareModel, card: CardModel, presentation: PresentationModel | any, contact: ContactModel, deal: ShareContactModel): void {
         const appUrl = this.configService.get<string>('REDIRECT_FRONT_BASE_URL');
-        const subject = presentation && presentation.id ? `::Platpres:: ${user.name + user.lastname} te ha compartido una presentación` :
-            `::Platpres:: ${user.name + user.lastname} te ha compartido una tarjeta`;
+        const subject = presentation && presentation.id ? `::Platpres:: ${user.name + ' ' + user.lastname} te ha compartido una presentación` :
+            `::Platpres:: ${user.name + ' ' + user.lastname} te ha compartido una tarjeta`;
         const resourceName = presentation && presentation.id ? 'presentación' : 'tarjeta';
 
         const presentationHtml = presentation && presentation.id ? `<h2 style="color: #3A5081; font-size: 14px; margin-bottom: 24px">Video presentación enviada</h2>
         <div style="width: 80%;margin-bottom: 36px;">
             <img src="${presentation.thumbUri}" style="width: 100%; border-radius: 16px">
         </div>;` : '';
+
+        const attachmentHtml = share && share.pdfUri ? `<h2 style="color: #3A5081; font-size: 14px; margin-top: 24px; margin-bottom: 24px">Haz click en el siguiente botón para descargar el documento adjunto:</h2>
+        <div style="width: 100%; text-align: center;margin-bottom: 36px;">
+            <a href="${share.pdfUri}" target="_blank" style="padding: 16px;
+            background: black;
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;">
+                Descargar documento
+            </a>
+        </div>` : '';
+        const logoSize = Math.round(140 * card.logoScale);
+        const logoLeft = Math.round(145 * card.logoXPosition);
+        const logoTop = Math.round(50 * card.logoYPosition);
+
         let htmlData = `${email_tmpl}`.replace(/%%videoUrl%%/g, card.videoGifUri)
                                       .replace(/%%logoUrl%%/g,  card.logoUri)
-                                      .replace(/%%logoScale%%/g,  card.logoScale.toString())
+                                      .replace(/%%logoSize%%/g, logoSize.toString())
+                                      .replace(/%%logoLeft%%/g, logoLeft.toString() + 'px')
+                                      .replace(/%%logoTop%%/g, logoTop.toString() + 'px')
                                       .replace(/%%name%%/g, `${card.name} ${card.lnames}`)
                                       .replace(/%%position%%/g, card.position)
                                       .replace(/%%presentationHtml%%/g, presentationHtml)
                                       .replace(/%%resourceName%%/g, resourceName)
+                                      .replace(/%%attachmentHtml%%/g, attachmentHtml)
                                       .replace(/%%seeMoreUrl%%/g, `${appUrl}/app/presentation/${deal.id}`);
 
         const options: SesEmailOptions = {

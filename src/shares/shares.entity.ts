@@ -40,6 +40,18 @@ export class ShareModel {
     @ApiProperty({ type: String })
     csvPath: string;
 
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
+    pdfPath: string;
+
+    @Column({
+      nullable: true,
+    })
+    @ApiProperty({ type: String })
+    pdfUri: string;
+
     @ManyToOne(type => CardModel)
     card: CardModel;
 

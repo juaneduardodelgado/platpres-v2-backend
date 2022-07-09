@@ -3,6 +3,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import *  as path from 'path';
 import * as multer from 'multer';
+import * as slug from 'slug';
+import * as transcoderHelper from '../cards/transcoder.helper';
 import { ShareModel } from './shares.entity';
 import { SharesService } from './shares.service';
 import { SesEmailOptions, SesService } from '@nextnm/nestjs-ses';
@@ -13,7 +15,6 @@ import { ContactModel } from 'src/contacts/contacts.entity';
 import { ContactsService } from 'src/contacts/contacts.service';
 import { ShareContactModel } from './shares-contact.entity';
 import { ShareContactMessageModel } from './shares-contact-message.entity';
-import e from 'express';
 import { UsersService } from 'src/users/users.service';
 
 @Controller('api/shares')
@@ -288,7 +289,9 @@ export class SharesController {
                 card.logoPath = masterCard.logoPath;
                 card.logoUri = masterCard.logoUri;
             }
-            await this.sharesService.share(req.user, share, card, presentation, contact, deal);
+
+            const user = await this.usersService.findOne(req.user.username);
+            await this.sharesService.share(user, share, card, presentation, contact, deal);
         }
         
         // this.sharesService.share(share, card, presentation, contact);
@@ -341,4 +344,53 @@ export class SharesController {
         // associate the contact with the share by a intermediate table which will work to mark the deal as done, closed, ignored
         return this.sharesService.update(share);
     }
+
+    @UseInterceptors(FileInterceptor('file', {
+        storage: multer.diskStorage({
+            destination: './uploads/pdfs/',
+            filename: function ( req, file, cb ) {
+                const timestamp = new Buffer(new Date().getTime().toString()).toString('base64');
+                const fileo = path.parse(file.originalname);
+                cb( null, fileo.name+ '-' + timestamp + fileo.ext);
+            },
+        }),
+    }))
+    @Post(':id/pdf')
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ description: 'Card files uploaded successfully.'})
+    @ApiNotFoundResponse({ description: 'Card not found.' })
+    @ApiUnprocessableEntityResponse({ description: 'Card files not uploaded.' })
+    async uploadPdf(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: ShareModel,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        const share =  await this.sharesService.findOne(id);
+        if (!share) {
+            throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+        }
+
+        const response: any = await this.uploadRemotely(file.filename, share.id);
+        share.pdfPath = `pdfs/${file.filename}`;
+        share.pdfUri = response.uri;
+
+        // parse CSV to extract contacts
+        // verify each of them to confirm if it must be created for the current user
+        // associate the contact with the share by a intermediate table which will work to mark the deal as done, closed, ignored
+        return this.sharesService.update(share);
+    }
+
+    uploadRemotely = function(file, id) {
+        var _file = './uploads/pdfs/' + file;
+        var ext = path.extname(_file);
+        var s3filepath = path.dirname(_file) + '/' + slug(path.basename(_file, ext)) + ext;
+
+        return new Promise((resolve, reject) => {
+            transcoderHelper.uploadToS3(_file, s3filepath, id).then((uri) => {
+                resolve({uri, file});
+            }).catch((reason) => {
+                reject(reason);
+            });
+        });
+    };
 }

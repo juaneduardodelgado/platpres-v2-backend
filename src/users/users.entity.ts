@@ -63,4 +63,16 @@ export class UserModel {
     })
     @ApiProperty({ type: Date })
     activationCodeExpiration?: Date;
+
+    @Column({
+        nullable: true,
+    })
+    @ApiProperty({ type: String })
+    profilePath?: string;
+
+    @Column({
+        nullable: true,
+    })
+    @ApiProperty({ type: String })
+    profileUri?: string;
   }

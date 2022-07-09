@@ -1,10 +1,17 @@
-import { Controller, Request, Res, Post, UseGuards, Get, HttpCode, HttpStatus, Body, HttpException } from '@nestjs/common';
+import { Controller, Request, Res, Post, UseGuards, Get, HttpCode, HttpStatus, Body, UploadedFile, HttpException, UseInterceptors, Param, ParseIntPipe } from '@nestjs/common';
 import { Response } from 'express';
 import { LocalAuthGuard } from './auth/local-auth.guard';
 import { AuthService } from './auth/auth.service';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { UsersService } from './users/users.service';
 import { UserModel } from './users/users.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiNotFoundResponse, ApiOkResponse, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
+import { Express } from 'express';
+import *  as path from 'path';
+import * as multer from 'multer';
+import * as slug from 'slug';
+import * as transcoderHelper from './cards/transcoder.helper';
 
 @Controller()
 export class AppController {
@@ -44,6 +51,50 @@ export class AppController {
       lastname: newUser.lastname,
     };
   }
+
+  @UseInterceptors(FileInterceptor('file', {
+    storage: multer.diskStorage({
+        destination: './uploads/pics/',
+        filename: function ( req, file, cb ) {
+            const timestamp = new Buffer(new Date().getTime().toString()).toString('base64');
+            const fileo = path.parse(file.originalname);
+            cb( null, slug(fileo.name + '-' + timestamp) + fileo.ext);
+        },
+    }),
+}))
+@Post('api/register/:uuid/profile')
+@ApiOkResponse({ description: 'Profile pic uploaded successfully.'})
+@ApiNotFoundResponse({ description: 'User not found.' })
+@ApiUnprocessableEntityResponse({ description: 'Profile files not uploaded.' })
+async uploadVideo(
+    @Param('uuid', ParseIntPipe) uuid: number,
+    @Body() body: any,
+    @UploadedFile() file: Express.Multer.File,
+) {
+    const user =  await this.usersService.findOnebyUuid(uuid.toString());
+    if (!user) {
+        throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    }
+
+    const response: any = await this.uploadRemotely(file.filename, user.uuid);
+    user.profilePath = `files/${file.filename}`;
+    user.profileUri = response.uri;
+    return this.usersService.update(user);
+}
+
+  uploadRemotely = function(file, id) {
+    var _file = './uploads/pics/' + file;
+    var ext = path.extname(_file);
+    var s3filepath = path.dirname(_file) + '/' + slug(path.basename(_file, ext)) + ext;
+
+    return new Promise((resolve, reject) => {
+        transcoderHelper.uploadToS3(_file, s3filepath, id).then((uri) => {
+            resolve({uri, file});
+        }).catch((reason) => {
+            reject(reason);
+        });
+    });
+  };
 
   @Post('api/recover')
   async recover(@Request() req, @Body() data: any) {
